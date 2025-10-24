@@ -1,117 +1,59 @@
 # Proyecto: Modificación de Cursos en Jetpack Compose
 
-## Integrantes del Equipo
+## Integrantes
 - **Carlo Valdivia Luna**
-- **Taylor Betanzos Rosas**
+- **Taylor Betanzos**
 
-## Descripción del Proyecto
-Esta aplicación desarrollada en **Jetpack Compose** permite modificar el nombre de cursos existentes dentro de una lista predefinida de la carrera de Ingeniería de Sistemas. La aplicación ofrece una interfaz moderna y reactiva que actualiza automáticamente los cambios en tiempo real.
+## Funcionalidad Principal y Descripción del Código
 
-## Funcionalidades Principales
+Esta aplicación desarrollada en Jetpack Compose permite modificar el nombre de un curso existente dentro de una lista predefinida de cursos de Ingeniería de Sistemas. El usuario puede ingresar el ID del curso y el nuevo nombre, y al presionar el botón "Modificar", la lista se actualiza automáticamente en la interfaz sin necesidad de recargar la pantalla. Además, cuenta con un botón "Ver/Ocultar Lista" que permite mostrar o esconder la lista completa de cursos de forma dinámica.
 
-### Características Implementadas
-- **Modificación de nombres de cursos** mediante ID y nuevo nombre
-- **Visualización dinámica** de la lista de cursos
-- **Sistema de estados reactivos** para actualizaciones en tiempo real
-- **Interfaz moderna** con componentes Material Design 3
+## Explicación del Funcionamiento del Código
 
-### Funcionalidades Específicas
-1. **Campo para ID del curso** - Identifica el curso a modificar
-2. **Campo para nuevo nombre** - Texto de reemplazo
-3. **Botón "Modificar"** - Ejecuta la actualización del curso
-4. **Botón "Ver/Ocultar Lista"** - Controla la visualización de la lista completa
-5. **Lista reactiva** - Se actualiza automáticamente sin recargar
+### 1. Estado Reactivo con mutableStateListOf
 
-## Arquitectura y Tecnologías
+La lista de cursos se define mediante `val cursos = remember { mutableStateListOf(...) }`.  
+Esto crea una lista reactiva u observable, lo que significa que cualquier modificación dentro de ella (como cambiar el nombre de un curso) será detectada por Jetpack Compose, provocando que la interfaz se recomponga automáticamente.  
+Gracias a este comportamiento, la lista mostrada mediante el componente LazyColumn siempre estará sincronizada con los datos actuales sin que el usuario tenga que actualizar manualmente.
 
-### Estructura Técnica
-```kotlin
-// Estado reactivo principal
-val cursos = remember { mutableStateListOf(...) }
+### 2. Entradas de Texto con OutlinedTextField
 
-// Estados de los campos de texto
-val idCurso = remember { mutableStateOf("") }
-val nuevoNombre = remember { mutableStateOf("") }
+Los campos de texto sirven para capturar los valores que el usuario ingresa:
 
-// Estado de visibilidad
-val mostrarLista = remember { mutableStateOf(true) }
-```
+- **ID del curso**: identifica cuál de los elementos se modificará.
+- **Nuevo nombre**: texto que reemplazará el nombre actual del curso.
 
-### Componentes Utilizados
+Cada campo utiliza una variable de estado (`remember { mutableStateOf("") }`), lo que permite que Compose recuerde los valores escritos incluso si la pantalla se recompone. Esto hace que la experiencia del usuario sea fluida, sin perder los datos al interactuar con otros elementos.
 
-#### 1. **Estado Reactivo con `mutableStateListOf`**
-- Lista observable que notifica cambios automáticamente
-- Recomposición automática de la interfaz
-- Sincronización perfecta entre datos y UI
+### 3. Botón "Modificar"
 
-#### 2. **Campos de Entrada - `OutlinedTextField`**
-- Dos campos para capturar ID y nuevo nombre
-- Estados persistentes con `remember { mutableStateOf("") }`
-- Experiencia fluida sin pérdida de datos
+El botón principal del programa ejecuta una lógica que:
 
-#### 3. **Botón de Modificación**
-- Verifica existencia del curso por ID
-- Actualiza el nombre mediante `copy(nombre = nuevoNombre.text)`
-- Muestra feedback con Toast
-- Reemplaza elemento en la lista reactiva
+- Verifica si el ID ingresado corresponde a un curso existente.
+- Si lo encuentra, actualiza el nombre del curso mediante una copia del objeto (`copy(nombre = nuevoNombre.text)`).
+- Reemplaza el elemento dentro de la lista, lo cual actualiza inmediatamente la interfaz gracias al sistema de estados de Compose.
+- Finalmente, muestra un mensaje Toast confirmando la modificación o indicando si el ID no existe.
 
-#### 4. **Control de Visibilidad**
-- Botón toggle para mostrar/ocultar lista
-- Estado booleano `mostrarLista`
-- Actualización instantánea sin afectar datos
+### 4. Botón "Ver/Ocultar Lista"
 
-#### 5. **Renderizado Eficiente - `LazyColumn`**
-- Renderizado optimizado de elementos visibles
-- Recomposición individual por elemento
-- Ideal para listas extensas
+Este botón controla un valor booleano (`mostrarLista`) que determina si la lista debe visualizarse o no.  
+Cada vez que el usuario lo presiona, el valor cambia entre `true` y `false`, lo que hace que la interfaz se actualice instantáneamente mostrando u ocultando la lista sin afectar los datos almacenados.
 
-#### 6. **Feedback al Usuario - `Toast`**
-- Confirmación de modificación exitosa
-- Notificación de error si ID no existe
-- Mejora la experiencia de usuario
+### 5. Visualización con LazyColumn
 
-## Flujo de la Aplicación
+La lista de cursos se muestra mediante `LazyColumn { items(cursos) { curso -> ... } }`.  
+Este componente es ideal para mostrar grandes cantidades de elementos, ya que solo renderiza los que están visibles en pantalla, mejorando el rendimiento y evitando recargas innecesarias.  
+Cuando se modifica un curso, solo ese elemento se recompone, lo que hace que el sistema sea rápido y eficiente incluso con listas extensas.
 
-### Interacción del Usuario
-1. **Ingreso de datos**: Usuario introduce ID y nuevo nombre
-2. **Ejecución**: Presiona botón "Modificar"
-3. **Validación**: Sistema verifica existencia del curso
-4. **Actualización**: Modifica el nombre si es válido
-5. **Feedback**: Muestra resultado mediante Toast
-6. **Visualización**: Lista se actualiza automáticamente
+### 6. Mensajes al Usuario con Toast
 
-### Proceso Técnico
-```kotlin
-// Flujo de modificación
-fun modificarCurso() {
-    val id = idCurso.text.toIntOrNull()
-    val curso = cursos.find { it.id == id }
-    
-    if (curso != null) {
-        val index = cursos.indexOf(curso)
-        cursos[index] = curso.copy(nombre = nuevoNombre.text)
-        mostrarToast("Curso modificado exitosamente")
-    } else {
-        mostrarToast("Error: ID no encontrado")
-    }
-}
-```
+El uso de Toast permite brindar retroalimentación inmediata al usuario. Por ejemplo:
 
-## Ventajas Técnicas
+- Si el ID no existe, se muestra un mensaje de error.
+- Si el cambio se realizó correctamente, aparece una confirmación.
 
-### Rendimiento
-- **Recomposición eficiente** gracias a `mutableStateListOf`
-- **Renderizado lazy** con `LazyColumn`
-- **Actualizaciones específicas** por elemento modificado
+Esto mejora la usabilidad y facilita la interacción con la aplicación.
 
-### Experiencia de Usuario
-- **Interfaz responsive** y moderna
-- **Feedback inmediato** con Toast
-- **Control dinámico** de visualización
-- **Persistencia de estado** en campos de texto
+## Resumen General
 
-## Conclusión
-
-Este proyecto demuestra el poder del **paradigma declarativo** de Jetpack Compose y la eficiencia del **estado reactivo**. La combinación de `mutableStateListOf` con componentes modernos como `OutlinedTextField`, `Button` y `LazyColumn` crea una experiencia de usuario fluida y profesional para la gestión de información académica.
-
-La arquitectura implementada asegura que la interfaz siempre esté sincronizada con los datos subyacentes, proporcionando una experiencia en tiempo real sin necesidad de actualizaciones manuales.
+Este proyecto demuestra el poder del estado reactivo en Jetpack Compose. Gracias a `mutableStateListOf`, la interfaz se mantiene siempre actualizada con los datos sin necesidad de refrescar manualmente. Además, el uso de `OutlinedTextField`, `Button` y `LazyColumn` permite crear una experiencia moderna y eficiente para gestionar información. El flujo del sistema es simple pero potente: el usuario ingresa datos, modifica información y ve los resultados en tiempo real.
